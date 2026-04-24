@@ -427,6 +427,7 @@ connectDB().then(async () => {
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
+  'https://learning-management-system-3-cy7c.onrender.com',
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3003',
