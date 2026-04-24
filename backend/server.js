@@ -35,10 +35,10 @@ connectDB().then(async () => {
       });
     }
 
-    // Delete all existing courses and reseed with video URLs
+    // Only seed if the database is empty (never delete existing data)
     if (courseCount > 0) {
-      console.log('Deleting existing courses to reseed with video URLs...');
-      await Course.deleteMany({});
+      console.log(`Database already has ${courseCount} courses. Skipping seed.`);
+      return;
     }
 
     const sampleCourses = [
@@ -436,7 +436,11 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Allow any vercel.app subdomain
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -483,8 +487,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export app for Vercel serverless (module.exports needed if deploying to Vercel)
+module.exports = app;
+
+// Start server on Render, local dev, or any non-Vercel environment
+// Vercel automatically sets process.env.VERCEL = "1"
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
